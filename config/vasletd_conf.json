@@ -1,0 +1,8 @@
+{
+    "log": {
+        "file": "vasletd.log",
+        "level": "info",
+        "max_file_size": 1048576,
+        "max_files": 1
+    }
+}

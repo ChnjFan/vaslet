@@ -66,8 +66,34 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "^(GNU|Clang|AppleClang)$")
 endif()
 
 # ---------------------------------------------------------------------------
+# Dependencies
+# ---------------------------------------------------------------------------
+if(NOT EXISTS "${PROJECT_SOURCE_DIR}/thirdparty/plog/include/plog/Log.h")
+    message(FATAL_ERROR
+        "plog is missing. Run: git submodule update --init thirdparty/plog"
+    )
+endif()
+set(PLOG_BUILD_SAMPLES OFF CACHE BOOL "Build plog samples" FORCE)
+set(PLOG_BUILD_TESTS OFF CACHE BOOL "Build plog tests" FORCE)
+set(PLOG_INSTALL OFF CACHE BOOL "Install plog headers and CMake files" FORCE)
+add_subdirectory(thirdparty/plog EXCLUDE_FROM_ALL)
+set_property(TARGET plog APPEND PROPERTY INTERFACE_SYSTEM_INCLUDE_DIRECTORIES
+    "${PROJECT_SOURCE_DIR}/thirdparty/plog/include"
+)
+
+# ---------------------------------------------------------------------------
 # Source modules
 # ---------------------------------------------------------------------------
+set(VASLET_INSTALL_CONFIGDIR "${CMAKE_INSTALL_SYSCONFDIR}/vaslet")
+get_filename_component(VASLET_DEFAULT_STARTUP_CONFIG_PATH
+    "${VASLET_INSTALL_CONFIGDIR}/vasletd_conf.json"
+    ABSOLUTE BASE_DIR "${CMAKE_INSTALL_PREFIX}"
+)
+string(REPLACE "\\" "\\\\" VASLET_DEFAULT_STARTUP_CONFIG_PATH_ESCAPED
+    "${VASLET_DEFAULT_STARTUP_CONFIG_PATH}")
+string(REPLACE "\"" "\\\"" VASLET_DEFAULT_STARTUP_CONFIG_PATH_ESCAPED
+    "${VASLET_DEFAULT_STARTUP_CONFIG_PATH_ESCAPED}")
+configure_file(common/paths.h.in generated/vaslet_paths.h @ONLY)
 configure_file(common/version.h.in generated/vaslet_version.h @ONLY)
 file(GLOB_RECURSE VASLET_COMMON_SOURCES CONFIGURE_DEPENDS
     common/*.cpp
@@ -81,6 +107,7 @@ add_subdirectory(src)
 option(BUILD_TESTING "Build the Vaslet test suite" OFF)
 if(BUILD_TESTING)
     enable_testing()
+    add_subdirectory(tests)
 endif()
 
 # ---------------------------------------------------------------------------
@@ -97,11 +124,21 @@ install(TARGETS vasletd
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
 )
+install(FILES config/vasletd_conf.json DESTINATION "${VASLET_INSTALL_CONFIGDIR}")
 install(DIRECTORY "${PROJECT_SOURCE_DIR}/include/vaslet"
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+    OPTIONAL
 )
 install(FILES LICENSE DESTINATION ${CMAKE_INSTALL_DATADIR}/vaslet)
 install(FILES thirdparty/rapidjson/license.txt
     DESTINATION ${CMAKE_INSTALL_DATADIR}/vaslet
     RENAME rapidjson-LICENSE.txt
+)
+install(FILES thirdparty/cmdline/LICENSE
+    DESTINATION ${CMAKE_INSTALL_DATADIR}/vaslet
+    RENAME cmdline-LICENSE.txt
+)
+install(FILES thirdparty/plog/LICENSE
+    DESTINATION ${CMAKE_INSTALL_DATADIR}/vaslet
+    RENAME plog-LICENSE.txt
 )
