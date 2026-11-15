@@ -8,6 +8,7 @@
 #include <string>
 
 namespace vaslet {
+namespace app {
 
 enum class LogLevel {
     kNone,
@@ -20,14 +21,20 @@ enum class LogLevel {
 };
 
 struct LogConfig {
-    std::string file = "vasletd.log";
+    std::string file = "/etc/vasletd.log";
     LogLevel level = LogLevel::kInfo;
     std::size_t max_file_size = 0;
     int max_files = 0;
 };
 
+struct VasletdConfig {
+    std::string socket_path = "/tmp/vasletd.sock";
+    std::string pid_file = "/tmp/vasletd.pid";
+};
+
 struct StartupConfig {
     LogConfig log;
+    VasletdConfig vasletd;
 };
 
 struct StartupConfigResult {
@@ -35,14 +42,18 @@ struct StartupConfigResult {
     std::string error;
 };
 
-// Reads a UTF-8 JSON object. Missing fields use the defaults above. Rejects
-// unknown/duplicate fields, incorrect types, embedded NUL bytes, invalid
-// levels, and out-of-range rotation values. Relative log paths use the working
-// directory. An empty error indicates success. Failure returns default config
-// values and an error without input contents; the file and running
-// configuration are untouched.
+// Reads a UTF-8 JSON object with optional log and vasletd objects. Missing
+// fields use the defaults above. Unknown fields are ignored; the first
+// occurrence of a duplicate field is used. Rejects incorrect types, empty
+// paths, embedded NUL bytes in known string values, raw NUL bytes, invalid log
+// levels, and out-of-range rotation values. Relative paths use the working
+// directory. Paths are loaded without checking or creating their targets.
+// An empty error indicates success. Failure returns default config values and
+// an error without input contents; the file and running configuration are
+// untouched.
 StartupConfigResult LoadStartupConfig(const std::string& path);
 
+}  // namespace app
 }  // namespace vaslet
 
 #endif  // VASLET_SRC_APP_STARTUP_CONFIG_H_

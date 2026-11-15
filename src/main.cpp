@@ -18,21 +18,21 @@
 
 namespace {
 
-plog::Severity ToPlogSeverity(vaslet::LogLevel level) {
+plog::Severity ToPlogSeverity(vaslet::app::LogLevel level) {
     switch (level) {
-        case vaslet::LogLevel::kNone:
+        case vaslet::app::LogLevel::kNone:
             return plog::none;
-        case vaslet::LogLevel::kFatal:
+        case vaslet::app::LogLevel::kFatal:
             return plog::fatal;
-        case vaslet::LogLevel::kError:
+        case vaslet::app::LogLevel::kError:
             return plog::error;
-        case vaslet::LogLevel::kWarning:
+        case vaslet::app::LogLevel::kWarning:
             return plog::warning;
-        case vaslet::LogLevel::kInfo:
+        case vaslet::app::LogLevel::kInfo:
             return plog::info;
-        case vaslet::LogLevel::kDebug:
+        case vaslet::app::LogLevel::kDebug:
             return plog::debug;
-        case vaslet::LogLevel::kVerbose:
+        case vaslet::app::LogLevel::kVerbose:
             return plog::verbose;
     }
     return plog::none;
@@ -40,7 +40,7 @@ plog::Severity ToPlogSeverity(vaslet::LogLevel level) {
 
 // Called once before starting worker threads. Check the path before handing
 // logging to plog, whose file appender opens lazily and reports no I/O status.
-bool InitializeLogging(const vaslet::LogConfig& config) {
+bool InitializeLogging(const vaslet::app::LogConfig& config) {
     std::FILE* file = std::fopen(config.file.c_str(), "ab");
     if (file == nullptr) {
         std::fprintf(stderr, "vasletd: Failed to open log file '%s': %s\n",
@@ -63,7 +63,7 @@ bool InitializeLogging(const vaslet::LogConfig& config) {
 // Parses command-line arguments and returns the resolved configuration path.
 // Prints help/version output or diagnostic errors and exits the program
 // directly when parsing should terminate execution.
-std::string parse_command_line(int argc, char* argv[]) {
+std::string ParseCommandLine(int argc, char* argv[]) {
     cmdline::parser parser;
     parser.set_program_name("vasletd");
     parser.add("version", 'v', "Print version and exit");
@@ -98,8 +98,8 @@ std::string parse_command_line(int argc, char* argv[]) {
 }  // namespace
 
 int main(int argc, char* argv[]) {
-    const std::string config_path = parse_command_line(argc, argv);
-    const auto startup = vaslet::LoadStartupConfig(config_path);
+    const std::string config_path = ParseCommandLine(argc, argv);
+    const auto startup = vaslet::app::LoadStartupConfig(config_path);
     if (!startup.error.empty()) {
         std::fprintf(stderr, "vasletd: %s\n", startup.error.c_str());
         return EXIT_FAILURE;
@@ -109,8 +109,8 @@ int main(int argc, char* argv[]) {
     }
     PLOG_INFO << "vasletd " << vaslet::kVersion << ": logging initialized";
 
-    // TODO: Run the server event loop.
-    // TODO: Release server resources before exiting.
+    
+
     PLOG_INFO << "vasletd exiting";
     return EXIT_SUCCESS;
 }
